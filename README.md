@@ -1,4 +1,4 @@
-# MISK DSI Group Assignment : R & EDA
+# Spotify Dataset EDA
 
 # Description 
 
