@@ -22,10 +22,14 @@ spotify_songs <- spotify %>%
                     year > 2010 ~ "modern era"),
     duration_min = duration_ms/60000) %>%
   select(-year, -track_album_id, -playlist_id, -duration_ms)
+spotify_songs$year <- as.numeric(format(spotify_songs$track_album_release_date, "%Y"))
+
 
 #duration
 
-##########
+#the distribution of duration in each Genre and Era:
+
+#using ggplot geom_density
 spotify_songs %>%
   na.omit(era) %>%
   ggplot() +
@@ -35,33 +39,48 @@ spotify_songs %>%
   labs(x='duration_min') +
   theme(legend.position = 'none')
 
+#As we can see the duration is relatively similar in all eras however
+# in 2010's era we can see edm tracks have a longer duration than other eras.
+#Also in the modern era rap songs tend to be shorter compared to the other eras
+
+
+
 #duration popularity throughout time
-ggplot(spotify_songs, aes(x=duration_min, y=track_popularity, col=era))+ 
-  geom_jitter( size = 1.5, alpha(0.25) )+ facet_grid(era ~ .)
+
+spotify_songs %>%
+  na.omit(era) %>% 
+ggplot(aes(x=duration_min, y=track_popularity, col=era))+ 
+  geom_jitter(width = 0.2, alpha = 0.5, shape = 16)+
+  facet_grid(era ~ .)
+
+
+
+#loudness and genre 
+#boxplot and density
+
+
+ggplot(spotify_songs, aes(x = factor(playlist_genre), y =loudness, fill = playlist_genre)) + 
+  stat_boxplot(geom = "errorbar", width = 0.25) + 
+  geom_boxplot() +
+  guides(fill = guide_legend(title = "genre"))+ xlab("genre")
+
+
+
+
+spotify_songs %>%
+  na.omit() %>%
+  ggplot() +
+  geom_density(aes(loudness, fill=playlist_genre)) +
+  facet_grid(~playlist_genre) +
+  theme_light() +
+  labs(x='loudness') +
+  theme(legend.position = 'none')
 
 
 
 
 
 
-
-#loudness
-
-#boxplot
-
-ggplot(data = spotify, mapping = aes(x = playlist_genre, y=loudness, fill=playlist_genre, alpha=0.05)) +
-  geom_boxplot()+
-  theme_bw()+
-  theme(legend.position = "none")+
-  labs(x = "Playlist Genres",
-       y = "loudness",
-       title = "Distribution of loudness by using boxpplot")
-
-
-
-
-ggplot(spotify_songs, aes(x=loudness, y=track_popularity, col=playlist_genre))+ 
-  geom_jitter( size = 1.5 )+ facet_wrap(playlist_genre ~ .)
 
 
 
