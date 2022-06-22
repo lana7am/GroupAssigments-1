@@ -87,20 +87,26 @@ songs %>%
 table(songs$playlist_genre, songs$quartile_popularity) %>% 
   as.data.frame() -> tentile_popularity
 
+# genre and quartile relationship
 ggplot(tentile_popularity, aes(Var2, Freq, color = Var1, group = Var1)) +
   geom_point() +
   # geom_col(position = "fill") +
-  # scale_y_continuous("Proportion") +
-  # geom_line() +
+  scale_y_continuous("Proportion") +
+  geom_line() +
   # geom_step() +
   # geom_path() +
   NULL
 
+ggplot(songs, aes(year , facets = playlist_genre)) +
+  geom_density(alpha = 0.3) +
+  # coord_cartesian(xlim = c(-20, 5)) +
+  facet_wrap(. ~ playlist_genre) +
+  NULL
 
-
-
-
-
+# ggplot(songs, aes(year )) +
+#   geom_density(alpha = 0.3) +
+#   # coord_cartesian(xlim = c(-20, 5)) +
+#   NULL
 
 
 songs_amatures %>% 
@@ -171,6 +177,7 @@ ggplot(aes(decade, track_popularity)) +
 # popularity by decade --------
 # in the 10s there were some artists who consistently
 # had extremely high avg_popularity
+# 1
 songs %>% 
   group_by(decade) %>% 
   summarise(avg_popularity) %>% 
@@ -178,13 +185,147 @@ songs %>%
   ggplot(aes(decade, avg_popularity)) +
   geom_violin()
   
+# 2
 songs %>% 
   group_by(decade) %>% 
-  summarise(track_popularity) %>% 
   
   ggplot(aes(decade, track_popularity)) +
   geom_violin()
+
+# 3 all
+songs %>% 
+  filter(!performed_tracks == 1) %>% 
+  group_by(decade) %>% 
   
+  ggplot(aes(decade, stddev_popularity)) +
+  geom_violin()
+
+# 3 most popular %50
+# I HAVE SOMETHING GOOD HERE. COME BACK TO IT IF YOU HAVE TIME 
+# the most popular %50 of artists- is their tracks' performance more consistent?
+songs %>% 
+  filter(!performed_tracks == 1) %>% 
+  mutate(top_50th_percentile = as.character(quantcut(avg_popularity, 2)) == "(45.4,90.7]") %>% 
+  filter(top_50th_percentile) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(decade, stddev_popularity)) +
+  geom_violin() +
+  # geom_point(alpha = 0.2, position = "jitter") +
+  NULL
+
+songs %>% 
+  filter(!performed_tracks == 1) %>% 
+  mutate(top_50th_percentile = !as.character(quantcut(avg_popularity, 2)) == "(45.4,90.7]") %>% 
+  filter(top_50th_percentile) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(decade, stddev_popularity)) +
+  geom_violin() +
+  # geom_point(alpha = 0.2, position = "jitter") +
+  NULL
+
+
+# 4 all
+# best plot so far (it and #3)
+# it tells us that artist's performance on track_popularity
+# is more consistent in recent years 
+songs %>% 
+  filter(!performed_tracks == 1) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(decade, range_popularity)) +
+  geom_violin()
+
+#4 most popular %50
+songs %>% 
+  filter(!performed_tracks == 1) %>% 
+  mutate(top_50th_percentile = as.character(quantcut(track_popularity, 2)) == "(49,100]") %>% 
+  filter(top_50th_percentile == TRUE) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(decade, range_popularity)) +
+  geom_violin() +
+  # geom_point(alpha = 0.2, position = "jitter") +
+  NULL
+
+
+songs %>% 
+  filter(!performed_tracks == 1) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(decade, performed_tracks)) +
+  geom_violin() +
+  # geom_point(alpha = 0.2, position = "jitter") +
+  coord_cartesian(ylim = c(0, 40)) +
+  NULL
+
+# copy of above but with genre instead of decade ---------
+
+# 3 all
+songs %>% 
+  filter(!performed_tracks == 1) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(playlist_genre, stddev_popularity)) +
+  geom_violin()
+
+# 3 most popular %50
+
+songs %>% 
+  filter(!performed_tracks == 1) %>% 
+  mutate(top_50th_percentile = as.character(quantcut(track_popularity, 2)) == "(49,100]") %>% 
+  filter(top_50th_percentile == TRUE) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(playlist_genre, stddev_popularity)) +
+  geom_violin() +
+  # geom_point(alpha = 0.2, position = "jitter") +
+  NULL
+
+
+# 4 all
+# best plot so far (it and #3)
+# it tells us that artist's performance on track_popularity
+# is more consistent in recent years 
+songs %>%     # rock tracks have a large range -- wait a second could this be 
+              # influenced by the fact rock tracks are more likely to be produced
+              # in older decades, which is a confounding variable that is 
+              # assosiated with both rock tracks and high range_popularity
+  filter(!performed_tracks == 1) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(playlist_genre, range_popularity)) +
+  geom_violin()
+
+#4 most popular %50
+songs %>% 
+  filter(!performed_tracks == 1) %>% 
+  mutate(top_50th_percentile = as.character(quantcut(track_popularity, 2)) == "(49,100]") %>% 
+  filter(top_50th_percentile == TRUE) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(playlist_genre, range_popularity)) +
+  geom_violin() +
+  # geom_point(alpha = 0.2, position = "jitter") +
+  NULL
+
+
+songs %>% 
+  filter(!performed_tracks == 1) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(decade, performed_tracks)) +
+  # geom_violin() +
+  geom_point(alpha = 0.8, position = "jitter") +
+  coord_cartesian(ylim = c(0, 40)) +
+  NULL
+
+
+
+
+
+
 # popularity by genre ----------
 songs %>% 
   group_by(playlist_genre) %>% 
@@ -224,21 +365,21 @@ ggplot(aes(decade, avg_number_genres)) +
 # table(songs$playlist_genre, songs$playlist_genre)
 
 
-
-songs_exclusive$year <- as.numeric(songs_exclusive$year) 
-songs_exclusive %>% 
-  select(- c(track_id, track_name, track_artist, track_album_id,
-         track_album_name, track_album_name,
-         track_album_release_date, playlist_name, playlist_id,
-         playlist_genre, playlist_subgenre, decade)) %>% 
-  cor() -> corr_matrix
-
-corr_matrix %>% 
-  corrplot()
-
-corr_matrix[1,] %>% 
-  abs() %>% 
-  sort()
+# dead end ----------
+# songs_exclusive$year <- as.numeric(songs_exclusive$year) 
+# songs_exclusive %>% 
+#   select(- c(track_id, track_name, track_artist, track_album_id,
+#          track_album_name, track_album_name,
+#          track_album_release_date, playlist_name, playlist_id,
+#          playlist_genre, playlist_subgenre, decade)) %>% 
+#   cor() -> corr_matrix
+# 
+# corr_matrix %>% 
+#   corrplot()
+# 
+# corr_matrix[1,] %>% 
+#   abs() %>% 
+#   sort()
 
 
 # most important attributes to predicting track_popularity
@@ -257,66 +398,137 @@ corr_matrix[1,] %>%
 
 
 
+# finalists -----------
+
+# best plot so far
+songs %>% 
+  filter(year > 1960) %>% 
+ggplot(aes(x = track_popularity, fill = playlist_genre)) +
+  geom_histogram(binwidth = 5, position = "fill") +
+  scale_y_continuous("Proportion")
+
+
+
+# genre x year proportion: rock was very popular in the past
+songs %>% 
+  filter(year > 1965) %>% 
+ggplot(aes(x = year, fill = playlist_genre)) +
+  geom_histogram(binwidth = 5, position = "fill") +
+  scale_y_continuous("Proportion")
+
+
+# density plot genre x year
+ggplot(songs, aes(year , facets = playlist_genre)) +
+  geom_density(alpha = 0.3) +
+  # coord_cartesian(xlim = c(-20, 5)) +
+  facet_wrap(. ~ playlist_genre) +
+  NULL
+
+# track_popularity x decade
+songs %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(decade, track_popularity)) +
+  geom_violin() +
+  NULL
+
+# Viz A --------
+# it tells us that artist's performance on track_popularity
+# is more consistent in recent years 
+songs %>% 
+  filter(!performed_tracks == 1) %>%
+  filter(track_popularity > 5) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(decade, range_popularity)) +
+  # geom_violin() 
+  geom_boxplot()
+
+
+songs %>% 
+  filter(!performed_tracks == 1) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(decade, stddev_popularity)) +
+  # geom_violin() 
+  geom_boxplot()
+
+
+
+# genre x popularity range -----------
+
+# 4 all
+# best plot so far (it and #3)
+# it tells us that artist's performance on track_popularity
+# is more consistent in recent years 
+songs %>%     # rock tracks have a large range -- wait a second could this be 
+  # influenced by the fact rock tracks are more likely to be produced
+  # in older decades, which is a confounding variable that is 
+  # assosiated with both rock tracks and high range_popularity
+  filter(!performed_tracks == 1) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(playlist_genre, range_popularity)) +
+  geom_violin()
+
+#4 most popular %50
+songs %>% 
+  filter(!performed_tracks == 1) %>% 
+  mutate(top_50th_percentile = as.character(quantcut(track_popularity, 2)) == "(49,100]") %>% 
+  filter(top_50th_percentile == TRUE) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(playlist_genre, range_popularity)) +
+  geom_violin() +
+  # geom_point(alpha = 0.2, position = "jitter") +
+  NULL
+
+# Viz B -------------
+#4 most popular %50
+songs %>% 
+  filter(!performed_tracks == 1) %>% 
+  mutate(top_50th_percentile = as.character(quantcut(track_popularity, 2)) == "(49,100]") %>% 
+  # filter(top_50th_percentile == TRUE) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(playlist_genre, stddev_popularity)) +
+  geom_violin() +
+  facet_wrap(. ~ top_50th_percentile) +
+  # geom_point(alpha = 0.2, position = "jitter") +
+  coord_cartesian(ylim = c(0, 40))
+NULL
+
+
+songs %>% 
+  filter(!performed_tracks == 1) %>% 
+  mutate(top_50th_percentile = as.character(quantcut(track_popularity, 2)) == "(49,100]") %>% 
+  # filter(top_50th_percentile == TRUE) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(playlist_genre, stddev_popularity)) +
+  # geom_violin() +
+  geom_boxplot() +
+  facet_wrap(. ~ top_50th_percentile) +
+  # geom_point(alpha = 0.2, position = "jitter") +
+  coord_cartesian(ylim = c(0, 40))
+NULL
 
 
 
 
-songs$duration_min <- songs$duration_ms/60000
-
-############################################
-data1960s <- songs %>%
-  filter(year < 1970 & year > 1959)
-ggplot(data1960s, aes(x = duration_min, y = track_popularity)) + geom_jitter() +
-  labs(title = "Relationship between Song Duration and Popularity from 1960s", y = "track_popularity", x = "Duration (min)") +
-  theme_classic() + theme(plot.title = element_text(hjust = 0.5))
-############################################
-data1970s <- songs %>%
-  filter(year < 1980 & year > 1969)
-ggplot(data1970s, aes(x = duration_min, y = track_popularity)) + geom_jitter() +
-  labs(title = "Relationship between Song Duration and Popularity from 1970s", y = "track_popularity", x = "Duration (min)") +
-  theme_classic() + theme(plot.title = element_text(hjust = 0.5))
-############################################
-data1980s <- songs %>%
-  filter(year < 1990 & year > 1979)
-ggplot(data1980s, aes(x = duration_min, y = track_popularity)) + geom_jitter() +
-  labs(title = "Relationship between Song Duration and Popularity from 1980s", y = "track_popularity", x = "Duration (min)") +
-  theme_classic() + theme(plot.title = element_text(hjust = 0.5))
-############################################
-data1990s <- songs %>%
-  filter(year < 2000 & year > 1989)
-ggplot(data1990s, aes(x = duration_min, y = track_popularity)) + geom_jitter() +
-  labs(title = "Relationship between Song Duration and Popularity from 1990s", y = "track_popularity", x = "Duration (min)") +
-  theme_classic() + theme(plot.title = element_text(hjust = 0.5))
-################################################
-data2000s <- songs %>%
-  filter(year < 2010 & year > 1999)
-ggplot(data2000s, aes(x = duration_min, y = track_popularity)) + geom_jitter() +
-  labs(title = "Relationship between Song Duration and Popularity from 2000s", y = "track_popularity", x = "Duration (min)") +
-  theme_classic() + theme(plot.title = element_text(hjust = 0.5))
-############################################
-data2010s <- songs %>%
-  filter(year < 2020 & year > 2010)
-ggplot(data2010s, aes(x = duration_min, y = track_popularity)) + geom_jitter() +
-  labs(title = "Relationship between Song Duration and Popularity from 2010s", y = "track_popularity", x = "Duration (min)") +
-  theme_classic() + theme(plot.title = element_text(hjust = 0.5))
-
-
-decadedata <- rbind(data1960s, data1970s, data1980s, data1990s, data2000s, data2010s)
-ggplot(decadedata, aes(x=duration_min, y=track_popularity, col=year))+ 
-  geom_jitter( size = 1.5 )+ facet_wrap(year ~ .)
 
 
 
 
+# different section -----------
 
-
-
-
-
-
-
-
-
+# track popularity and genre
+songs %>% 
+  group_by(playlist_genre) %>% 
+  summarise(track_popularity) %>% 
+  
+  ggplot(aes(playlist_genre, track_popularity)) +
+  geom_violin()
 
 
 
