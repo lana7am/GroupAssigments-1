@@ -1,0 +1,208 @@
+---
+title: "Spotify_report"
+output: html_document
+date: '2022-06-22'
+knit: (function(input, ...) {
+    rmarkdown::render(
+      input,
+      output_dir = "../"
+    )
+  })
+---
+
+# Spotify Data 
+
+| variable                 | description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+|--------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| track_id                 | Song unique ID                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| track_name               | Song Name                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| track_artist             | Song Artist                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| track_popularity         | Song Popularity (0-100) where higher is better                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| track_album_id           | Album unique ID                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| track_album_name         | Song album name                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| track_album_release_date | Date when album released                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| playlist_name            | Name of playlist                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| playlist_id              | Playlist ID                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| playlist_genre           | Playlist genre                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| playlist_subgenre        | Playlist subgenre                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| danceability             | Danceability describes how suitable a track is for dancing based on a combination of musical elements including tempo, rhythm stability, beat strength, and overall regularity. A value of 0.0 is least danceable and 1.0 is most danceable.                                                                                                                                                                                                                                                                       |
+| energy                   | Energy is a measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity. Typically, energetic tracks feel fast, loud, and noisy. For example, death metal has high energy, while a Bach prelude scores low on the scale. Perceptual features contributing to this attribute include dynamic range, perceived loudness, timbre, onset rate, and general entropy.                                                                                                                          |
+| key                      | The estimated overall key of the track. Integers map to pitches using standard Pitch Class notation . E.g. 0 = C, 1 = C♯/D♭, 2 = D, and so on. If no key was detected, the value is -1.                                                                                                                                                                                                                                                                                                                            |
+| loudness                 | The overall loudness of a track in decibels (dB). Loudness values are averaged across the entire track and are useful for comparing relative loudness of tracks. Loudness is the quality of a sound that is the primary psychological correlate of physical strength (amplitude). Values typical range between -60 and 0 db.                                                                                                                                                                                       |
+| mode                     | Mode indicates the modality (major or minor) of a track, the type of scale from which its melodic content is derived. Major is represented by 1 and minor is 0.                                                                                                                                                                                                                                                                                                                                                    |
+| speechiness              | Speechiness detects the presence of spoken words in a track. The more exclusively speech-like the recording (e.g. talk show, audio book, poetry), the closer to 1.0 the attribute value. Values above 0.66 describe tracks that are probably made entirely of spoken words. Values between 0.33 and 0.66 describe tracks that may contain both music and speech, either in sections or layered, including such cases as rap music. Values below 0.33 most likely represent music and other non-speech-like tracks. |
+| acousticness             | A confidence measure from 0.0 to 1.0 of whether the track is acoustic. 1.0 represents high confidence the track is acoustic.                                                                                                                                                                                                                                                                                                                                                                                       |
+| instrumentalness         | Predicts whether a track contains no vocals. “Ooh” and “aah” sounds are treated as instrumental in this context. Rap or spoken word tracks are clearly “vocal”. The closer the instrumentalness value is to 1.0, the greater likelihood the track contains no vocal content. Values above 0.5 are intended to represent instrumental tracks, but confidence is higher as the value approaches 1.0.                                                                                                                 |
+| liveness                 | Detects the presence of an audience in the recording. Higher liveness values represent an increased probability that the track was performed live. A value above 0.8 provides strong likelihood that the track is live.                                                                                                                                                                                                                                                                                            |
+| valence                  | A measure from 0.0 to 1.0 describing the musical positiveness conveyed by a track. Tracks with high valence sound more positive (e.g. happy, cheerful, euphoric), while tracks with low valence sound more negative (e.g. sad, depressed, angry).                                                                                                                                                                                                                                                                  |
+| tempo                    | The overall estimated tempo of a track in beats per minute (BPM). In musical terminology, tempo is the speed or pace of a given piece and derives directly from the average beat duration.                                                                                                                                                                                                                                                                                                                         |
+| duration_ms              | Duration of song in milliseconds                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+install.packages("Rcpp")
+```
+
+
+
+first initiate and download packages 
+
+```{r init}
+library(ggplot2)
+library(dplyr)
+library(lubridate)
+library('tidyverse')
+library(GGally)
+library(janitor)
+library(here)
+library(corrplot)
+library(plotly)
+library(scales)
+library(ggrepel)
+
+
+```
+
+second we load the dataset
+```{r }
+SpotifyData <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-01-21/spotify_songs.csv')
+```
+
+Interactive tables 
+
+```{r reactable, echo=FALSE}
+reactable(wine_tbl)
+```
+
+using the glimpse() : this function allows the features to be displayed vertically while the data can be viewed horizontally
+
+```{r glimpse}
+dplyr::glimpse(SpotifyData)
+```
+
+a summary of the dataset
+```{r summary}
+summary(SpotifyData)
+```
+
+to get a on overview of the dataset we used the corrgram() function to display the correlation of all the numeric feature
+```{r featuresCorr}
+featuresCorr <- dplyr::select(SpotifyData , track_popularity, danceability, energy, loudness, speechiness, acousticness, instrumentalness, liveness, valence, tempo ,key)
+corrgram::corrgram(cor(featuresCorr),order = TRUE, upper.panel =  NULL)
+
+TopMonth=SpotifyData %>%
+  select(-c(("track_id"),("track_album_id"),("playlist_name"),("playlist_id"),("duration_ms")))
+
+```
+
+we wanted to see if release month is effected by genre. 
+
+```{r releaseMonth}
+
+TopMonth=SpotifyData %>%
+  select(-c(("track_id"),("track_album_id"),("playlist_name"),("playlist_id"),("duration_ms")))
+
+TopMonth$track_album_release_date=as.Date(TopMonth$track_album_release_date)
+
+TopMonth=TopMonth %>%
+  mutate(month=month(TopMonth$track_album_release_date),year=year(TopMonth$track_album_release_date)) %>%
+  select(-c("track_album_release_date"))
+
+TopMonth =TopMonth%>%
+  mutate(period = case_when(
+      month == 1  ~ 'january'
+    , month == 2  ~ 'february'
+    , month == 3  ~ 'march'
+    , month == 4  ~ 'april'
+    , month == 5  ~ 'may'
+    , month == 6  ~ 'june'
+    , month == 7  ~ 'july'
+    , month == 8  ~ 'august'
+    , month == 9  ~ 'september'
+    , month == 10  ~ 'october'
+    , month == 11  ~ 'november'
+    , month == 12  ~ 'december'))
+
+TopMonth= TopMonth %>%
+  group_by(period) %>%
+  count(playlist_genre)
+
+TopMonth = na.omit(TopMonth)
+
+TopMonth$period = factor(TopMonth$period, levels = c('january', 'february', 'march', 'april', 'may', 'june' ,'july' ,'august', 'september', 'october', 'november' ,'december'))
+
+library("ggplot2")
+ggplot(TopMonth,aes(x=period,y=n, group = playlist_genre))+
+  geom_point(aes(colour=playlist_genre))+
+  geom_line(aes(colour=playlist_genre))+
+  xlab("Month")+ylab("Number of songs")+
+  ggtitle("Number of songs released during each month") 
+ 
+
+```
+
+From the above line chart we cannot conclude there is any correctional between genre and release date. 
+
+Are tracks with speech/words more popular than instrumental? to test this we got the median popularity for with a high speechiness and songs with high instrumentalness
+
+```{r speech/instr}
+SpotifyData %>% filter(speechiness > .80)  %>% pull(track_popularity) %>% median()
+SpotifyData %>% filter(instrumentalness	 > .80)  %>% pull(track_popularity) %>% median()
+```
+
+Distribution of loudness across genres
+
+```{r loudness}
+ggplot(data = SpotifyData, mapping = aes(x = playlist_genre, y=loudness, fill=playlist_genre, alpha=0.05)) +
+  geom_boxplot()+
+  theme_bw()+
+  theme(legend.position = "none")+
+  labs(x = "Playlist Genres",
+       y = "loudness",
+       title = "Distribution of loudness by using boxpplot")
+
+```
+
+which genre is the most popular?
+
+```{r popgen}
+
+ggplot(SpotifyData, aes(x = track_popularity, ..density.., color = playlist_genre)) + 
+  geom_freqpoly() +
+  coord_cartesian(ylim = c(0, 500)) + 
+  coord_cartesian(xlim = c(20, 120)) + 
+  NULL
+
+# rock genre has very interesting popularity distribution (right-hand tail)
+SpotifyData %>% 
+  filter(playlist_genre == "rock") %>% 
+  filter(track_popularity > 5) %>% 
+  
+  ggplot(aes(track_popularity)) +
+  geom_histogram()
+
+
+# compared to pop genre
+
+SpotifyData %>% 
+  filter(playlist_genre == "pop") %>% 
+  filter(track_popularity > 5) %>% 
+  
+  ggplot(aes(track_popularity)) +
+  geom_histogram()
+
+
+```
+
+which decade had the highest number of tracks with high popularity 
+
+```{r decade/pop}
+songs %>% 
+  group_by(decade) %>% 
+  summarise(track_popularity) %>% 
+  
+  ggplot(aes(decade, track_popularity)) +
+  geom_point(position = "jitter", shape = 16, alpha = 0.3)
+
+```
