@@ -41,7 +41,7 @@ knit: (function(input, ...) {
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-install.packages("Rcpp")
+install.packages("tidyverse")
 ```
 
 
@@ -52,7 +52,7 @@ first initiate and download packages
 library(ggplot2)
 library(dplyr)
 library(lubridate)
-library('tidyverse')
+
 library(GGally)
 library(janitor)
 library(here)
@@ -60,8 +60,8 @@ library(corrplot)
 library(plotly)
 library(scales)
 library(ggrepel)
-
-
+library(reactable)
+here::i_am("Spotify_Dataset_EDA.Rproj")
 ```
 
 second we load the dataset
@@ -72,7 +72,7 @@ SpotifyData <- readr::read_csv('https://raw.githubusercontent.com/rfordatascienc
 Interactive tables 
 
 ```{r reactable, echo=FALSE}
-reactable(wine_tbl)
+reactable(SpotifyData)
 ```
 
 using the glimpse() : this function allows the features to be displayed vertically while the data can be viewed horizontally
@@ -195,14 +195,9 @@ SpotifyData %>%
 
 ```
 
-which decade had the highest number of tracks with high popularity 
+what key is played the most
 
-```{r decade/pop}
-songs %>% 
-  group_by(decade) %>% 
-  summarise(track_popularity) %>% 
-  
-  ggplot(aes(decade, track_popularity)) +
-  geom_point(position = "jitter", shape = 16, alpha = 0.3)
-
+```{r key}
+ggplot(SpotifyData) + geom_bar(ggplot2::aes( key),width = 0.3) +
+  labs(x = "keys")
 ```

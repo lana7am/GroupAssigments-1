@@ -11,6 +11,7 @@ library(plotly)
 library(scales)
 library(ggrepel)
 library(lubridate)
+library(gtools)
 install.packages('corrgram')
 
 
@@ -131,7 +132,7 @@ SpotifyData <- SpotifyData %>%
 
 ##########
 
-spotify_songs <- SpotifyData %>% 
+spotify_SpotifyData <- SpotifyData %>% 
   mutate(
     track_album_release_date = as.Date(track_album_release_date),
     year = as.numeric(format(track_album_release_date,'%Y')),
@@ -224,7 +225,7 @@ pop_pie
 
 # plot the graph
 SpotifyData  %>%
-  ggplot(aes(x=(duration_ms / 60000), fill= playlist_genre)) +
+  ggplot(aes(x=(duration_ms/ 60000), fill= playlist_genre)) +
   labs(title = "Genre and Duration", y= "Density" , x= "Duration (min)") +
   geom_density(alpha= 0.4, color=NA) -> gen_dur 
 
@@ -248,5 +249,198 @@ ggplot(songs_popular, aes(playlist_genre, track_popularity)) +
 ggplot(SpotifyData, aes(playlist_genre, track_popularity)) +
   geom_boxplot()
 
+#mohammed---------------------------------------
 
+# which genre is most popular?
+ggplot(SpotifyData, aes(x = track_popularity, ..density.., color = playlist_genre)) + 
+  geom_freqpoly() +
+  coord_cartesian(ylim = c(0, 500)) + 
+  coord_cartesian(xlim = c(20, 120)) + 
+  NULL
+
+# rock genre has very interesting popularity distribution (right-hand tail)
+SpotifyData %>% 
+  filter(playlist_genre == "rock") %>% 
+  filter(track_popularity > 5) %>% 
+  
+  ggplot(aes(track_popularity)) +
+  geom_histogram()
+
+
+# compared to pop genre
+
+SpotifyData %>% 
+  filter(playlist_genre == "pop") %>% 
+  filter(track_popularity > 5) %>% 
+  
+  ggplot(aes(track_popularity)) +
+  geom_histogram()
+
+# what genres are most popular amongst top songs? 
+SpotifyData %>% 
+filter(track_popularity > 70) -> songs_popular
+
+ggplot(songs_popular, aes(track_popularity, fill = playlist_genre))  +
+  geom_histogram(binwidth = 10, position = "dodge")
+
+# versatility of artists -----------
+
+SpotifyData %>% 
+  mutate(year = as.numeric(format(as.Date(track_album_release_date, format = "%Y-%m-%d"), "%Y"))) %>%
+  # summarise(min(year, na.rm = TRUE), max = max(year, na.rm = TRUE))
+  mutate(decade = cut(year, breaks = c(1960, 1969, 1979, 1989, 1999, 2009, 2019, 2029), 
+                      labels = c("60s", "70s", "80s", "90s", "00s", "10s", "20s"))) %>% 
+  group_by(track_artist) %>% 
+  # summarise(avg_popularity = mean(track_popularity), range = diff(range(track_popularity)))
+  mutate(range_popularity = diff(range(track_popularity))) %>% 
+  mutate(avg_popularity = mean(track_popularity)) %>% 
+  mutate(stddev_popularity = sd(track_popularity)) %>% 
+  mutate(num_performed_tracks = n_distinct(track_id)) %>% 
+  ungroup() %>% 
+  mutate(quartile_popularity = quantcut(track_popularity, q = 10)) %>% 
+  ungroup() -> SpotifyData
+
+
+# what decade is most prevelent in our dataset?
+SpotifyData %>% 
+  # filter(num_performed_tracks > 1) %>% 
+  # filter(decade == "10s") %>% 
+  
+  ggplot(aes(x = num_performed_tracks, color = decade)) +
+  geom_freqpoly() +
+  # coord_cartesian(ylim = c(0, 1000)) +
+  NULL
+
+# what is the distribution of popularity based on release decade
+SpotifyData %>% 
+  group_by(decade) %>% 
+  summarise(track_popularity) %>% 
+  
+  ggplot(aes(decade, track_popularity)) +
+  geom_point(position = "jitter", shape = 16, alpha = 0.3)
+
+# popularity by decade --------
+# in the 10s there were some artists who consistently
+# had extremely high avg_popularity
+SpotifyData %>% 
+  group_by(decade) %>% 
+  summarise(avg_popularity) %>% 
+  
+  ggplot(aes(decade, avg_popularity)) +
+  geom_violin()
+
+SpotifyData %>% 
+  group_by(decade) %>% 
+  summarise(track_popularity) %>% 
+  
+  ggplot(aes(decade, track_popularity)) +
+  geom_violin()
+
+
+# what genre is most prevelent? 
+ggplot(SpotifyData, aes(factor(playlist_genre))) +
+  geom_bar()
+
+
+ggplot(SpotifyData, aes(track_popularity)) + 
+  geom_histogram()
+
+songs_exclusive <- SpotifyData %>% 
+  filter(track_popularity > 5)
+
+songs_amatures <- SpotifyData %>% 
+  filter(track_popularity < 5)
+
+songs_middle <- SpotifyData %>% 
+  filter(track_popularity > 5 & track_popularity < 70)
+
+ggplot(SpotifyData, aes(x = track_popularity, y = ..density.., color = playlist_genre)) + 
+  geom_freqpoly()
+
+
+# popularity by decade --------
+# in the 10s there were some artists who consistently
+# had extremely high avg_popularity
+# 1
+SpotifyData %>% 
+  group_by(decade) %>% 
+  summarise(avg_popularity) %>% 
+  
+  ggplot(aes(decade, avg_popularity)) +
+  geom_violin()
+
+# 2
+SpotifyData %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(decade, track_popularity)) +
+  geom_violin()
+
+# 3 all
+SpotifyData %>% 
+  filter(!performed_tracks == 1) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(decade, stddev_popularity)) +
+  geom_violin()
+
+# 3 most popular %50
+# I HAVE SOMETHING GOOD HERE. COME BACK TO IT IF YOU HAVE TIME 
+# the most popular %50 of artists- is their tracks' performance more consistent?
+SpotifyData %>% 
+  filter(!performed_tracks == 1) %>% 
+  mutate(top_50th_percentile = as.character(quantcut(avg_popularity, 2)) == "(45.4,90.7]") %>% 
+  filter(top_50th_percentile) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(decade, stddev_popularity)) +
+  geom_violin() +
+  # geom_point(alpha = 0.2, position = "jitter") +
+  NULL
+
+SpotifyData %>% 
+  filter(!performed_tracks == 1) %>% 
+  mutate(top_50th_percentile = !as.character(quantcut(avg_popularity, 2)) == "(45.4,90.7]") %>% 
+  filter(top_50th_percentile) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(decade, stddev_popularity)) +
+  geom_violin() +
+  # geom_point(alpha = 0.2, position = "jitter") +
+  NULL
+
+
+# 4 all
+# best plot so far (it and #3)
+# it tells us that artist's performance on track_popularity
+# is more consistent in recent years 
+SpotifyData %>% 
+  filter(!performed_tracks == 1) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(decade, range_popularity)) +
+  geom_violin()
+
+#4 most popular %50
+SpotifyData %>% 
+  filter(!performed_tracks == 1) %>% 
+  mutate(top_50th_percentile = as.character(quantcut(track_popularity, 2)) == "(49,100]") %>% 
+  filter(top_50th_percentile == TRUE) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(decade, range_popularity)) +
+  geom_violin() +
+  # geom_point(alpha = 0.2, position = "jitter") +
+  NULL
+
+
+SpotifyData %>% 
+  filter(!performed_tracks == 1) %>% 
+  group_by(decade) %>% 
+  
+  ggplot(aes(decade, performed_tracks)) +
+  geom_violin() +
+  # geom_point(alpha = 0.2, position = "jitter") +
+  coord_cartesian(ylim = c(0, 40)) +
+  NULL
 
