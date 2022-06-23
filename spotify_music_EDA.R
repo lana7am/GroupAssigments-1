@@ -341,7 +341,15 @@ songs %>%
   ggplot(aes(playlist_genre, track_popularity)) +
   geom_violin()
 
+
+songs %>% 
+  group_by(playlist_genre) %>% 
+  # summarise(track_popularity) %>% 
   
+  ggplot(aes(playlist_genre, stddev_popularity)) +
+  # geom_violin()
+  geom_boxplot()
+
 
 
 ggplot(songs, aes(x = duration_min, y = track_popularity)) + 
@@ -410,11 +418,12 @@ ggplot(aes(x = track_popularity, fill = playlist_genre)) +
 
 
 # genre x year proportion: rock was very popular in the past
+# Viz c -----------------
 songs %>% 
   filter(year > 1965) %>% 
 ggplot(aes(x = year, fill = playlist_genre)) +
   geom_histogram(binwidth = 5, position = "fill") +
-  scale_y_continuous("Proportion")
+  scale_y_continuous("Proportion") -> genre_year_prop
 
 
 # density plot genre x year
@@ -432,30 +441,47 @@ songs %>%
   geom_violin() +
   NULL
 
+songs %>% 
+  group_by(playlist_genre) %>% 
+  # summarise(track_popularity) %>% 
+  
+  ggplot(aes(playlist_genre, stddev_popularity)) +
+  # geom_violin()
+  geom_boxplot() -> stddev_popularity_genre
+
+
 # Viz A --------
 # it tells us that artist's performance on track_popularity
 # is more consistent in recent years 
 songs %>% 
   filter(!performed_tracks == 1) %>%
   filter(track_popularity > 5) %>% 
+  filter (!is.na(decade)) %>% 
   group_by(decade) %>% 
   
   ggplot(aes(decade, range_popularity)) +
   # geom_violin() 
-  geom_boxplot()
+  geom_boxplot() -> decade_popularity_range
 
 
 songs %>% 
   filter(!performed_tracks == 1) %>% 
+  filter(track_popularity > 5) %>% 
+  filter (!is.na(decade)) %>% 
   group_by(decade) %>% 
   
   ggplot(aes(decade, stddev_popularity)) +
   # geom_violin() 
-  geom_boxplot()
-
+  geom_boxplot() + 
+  labs(
+    x = "Decade",
+    y = "Standard Deviation of Popularity",
+    title = "Popularity Avg. Std. Deviation by Decade"
+  ) -> decade_popularity_stddev
 
 
 # genre x popularity range -----------
+
 
 # 4 all
 # best plot so far (it and #3)
@@ -483,7 +509,7 @@ songs %>%
   # geom_point(alpha = 0.2, position = "jitter") +
   NULL
 
-# Viz B -------------
+# section -------------
 #4 most popular %50
 songs %>% 
   filter(!performed_tracks == 1) %>% 
@@ -508,14 +534,28 @@ songs %>%
   ggplot(aes(playlist_genre, stddev_popularity)) +
   # geom_violin() +
   geom_boxplot() +
-  facet_wrap(. ~ top_50th_percentile) +
+  # facet_wrap(. ~ top_50th_percentile) +
   # geom_point(alpha = 0.2, position = "jitter") +
   coord_cartesian(ylim = c(0, 40))
 NULL
 
-
-
-
+# Viz B ----------
+songs %>% 
+  filter(!performed_tracks == 1) %>% 
+  mutate(top_50th_percentile = 
+           as.character(quantcut(track_popularity, 2)) == "(49,100]") %>% 
+  group_by(top_50th_percentile, playlist_genre) %>% 
+  summarise(avg_stddev = mean(stddev_popularity)) %>% 
+  arrange(top_50th_percentile, avg_stddev) %>% 
+  
+  ggplot(aes(top_50th_percentile, avg_stddev, color = playlist_genre, group = playlist_genre)) +
+  geom_point() +
+  geom_line() + 
+  labs (
+    x = "Top 50th Percentile?",
+    y = "Average Standard Deviation", 
+    title = "Artist-Popularity & Genre Relationship with Profit Variation"
+  ) -> stddev_artist_popularity_genre
 
 
 
@@ -530,10 +570,14 @@ songs %>%
   ggplot(aes(playlist_genre, track_popularity)) +
   geom_violin()
 
+decade_popularity_stddev
 
-
-
-
+# saving plots to files
+ggsave(filename = "decade_popularity_range.jpg", plot = decade_popularity_range)
+ggsave(filename = "decade_popularity_stddev.jpg", plot = decade_popularity_stddev)
+ggsave(filename = "genre_year_prop.jpg", plot = genre_year_prop)
+ggsave(filename = "stddev_popularity_genre.jpg", plot = stddev_popularity_genre)
+ggsave(filename = "stddev_artist_popularity_genre.jpg", plot = stddev_artist_popularity_genre)
 
 
 
