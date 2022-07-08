@@ -3,7 +3,7 @@
 # Description 
 
 An analysis of the spotify dataset
-[Link to report](https://github.com/lana7am/Spotify_Dataset_EDA/blob/main/Spotify_report.html)
+[Link to report](https://lana7am.github.io/Spotify_Dataset_EDA)
 # Group members
 
 - Lana almorabah
